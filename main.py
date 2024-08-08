@@ -1,133 +1,107 @@
-print('my dashboard.janani')
-
+# Import Libraries
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 import streamlit as st
 
-st.write('my dashboard.janani')
-# text
-st.title('Variablz Acadamy')
-st.header('Training Institute')
-st.subheader('Data Analyst Program')
-st.caption('Variablz Acadamy')
-st.text('Learning')
-# dataframe
-data = 'data/cars.csv'
 
-df = pd.read_csv(data)
+# Import Data
+df = pd.read_excel('data/Online Retail.xlsx',nrows = 50000,dtype = {'StockCode':str,'CustomerID':str })
 
-st.dataframe(df, width=1000, height=400)
-# matplotlib
-fig = plt.figure(figsize=(10,4))
-ax = fig.add_subplot()
-ax.scatter(df['Displacement'], df['Horsepower'])
-st.write(fig)
-
-# seaborn
-df = pd.read_csv('data/cars.csv')
-
-fig = plt.figure(figsize=(10,4))
-ax = fig.add_subplot()
-ax=sns.heatmap(
-    df.corr(numeric_only=True), cmap='vlag', annot=True)
-st.write(fig)
-
-# side bar
+# Sidebar Controls for Dynamic Dashboard
 with st.sidebar:
-    st.subheader('Sidebar')
+    st.subheader('Settings')
 
-st.header('Main Dashboard')
+st.header('Retail Dashboard')
 
-# columns
-cols = st.columns(3)
+# Main Dashboard Window
+cols1 = st.columns(3)
 
-with cols[0]:
-    st.header('column1')
+with cols1[0]:
+    st.write('Top 10 quantity')
+    fig = plt.figure()
+    ax = fig.add_subplot()
+    quantity = df['StockCode'].value_counts().head(10)
+    ax.bar(quantity.index,quantity.values)
 
-with cols[1]:
-    st.header('column2')
+    ax.set_xlabel('Quantity')
+    ax.set_ylabel('InvoiceDate')
+    ax.set_title('Top 10 Quantity')
+    plt.xticks(rotation = 90)
+    st.write(fig)
 
-with cols[2]:
-    st.header('column3')
+with cols1[1]:
+    st.write('Top 10 Price')
+    fig = plt.figure()
+    ax = fig.add_subplot()
+    UnitPrice = df['StockCode'].value_counts().head(10)
+    ax.bar(UnitPrice.index, UnitPrice.values)
 
-# Tabs
-app_tabs = ['Employees', 'Students']
-tabs = st.tabs(app_tabs)
+    ax.set_xlabel('Description')
+    ax.set_ylabel('UnitPrice')
+    ax.set_title('Top 10 Price')
+    plt.xticks(rotation = 90)
+    for index, value in enumerate(UnitPrice.values):
+        ax.text(index -0.3,value+0.2, value)
+    st.write(fig)
 
-with tabs[0]:
-    st.header('Employees')
-with tabs[1]:
-    st.header('Students')
+with cols1[2]:
+    st.write('Top 10 Customer')
+    fig = plt.figure()
+    ax = fig.add_subplot()
+    Customer = df['CustomerID'].value_counts().head(10)
+    ax.bar(Customer.index.astype(str), Customer.values)
 
-# Expander
-with st.expander('Setting:'):
-    st.write('Choose Your Theme')
-   
-
-st.header('Main Dashboard')
-
-# Buttons
-def greetings():
-    st.write('Welcome to Variablz')
-
-btn_welcome = st.button(label='Welcome', on_click=greetings)
-
-# Check Box
-agree = st.checkbox('I agree for Terms & Conditions')
-
-if agree:
-    st.write('User agreed, create account')
-else:
-    st.write('User declined, cancel operation')
-
-# Radiobutton
-gender = st.radio(label = 'Select gender', 
-                  options=
-                   ['Female', 'Male']
-)
-if gender == 'Female':
-    st.write("Welcome Ma'am")
-else:
-    st.write("Welcome Sir")
-
-# Select box
-country= st.selectbox(label = 'Choose country', 
-             options = ['India', 'London', 'Japan', 'China']
-)
-
-st.write(f'User from {country}')
-
-# Multi Select box
-course = st.multiselect(label = 'Choose Course',
-            options = ['Python', 'SQL', 'Java', 'Matplotlib']
-
-)
-st.write(f'User from {course}')
-
-# File upload
-data = st.file_uploader(label = 'Choose CSV File', type='csv')
-if data:
-    df = pd.read_csv(data)
-    st.DataFrame(data=df)
-
-with st.sidebar:
-    st.subheader('cars.csv')
+    ax.set_xlabel('CustomerID')
+    ax.set_ylabel('count')
+    ax.set_title('Top 10 Customer')
+    plt.xticks(rotation=90)
+    for index, value  in enumerate(Customer.values):
+        ax.text(index-0.3, value +0.4, value)
+    st.write(fig)
 
 
+cols2 = st.columns([0.5, 0.4 ])
+with cols2[0]:
+    st.write('Top 10 months')
+    df['month'] = df['InvoiceDate'].dt.month
+    df.head()
+    
+    fig = plt.figure()
+    ax = fig.add_subplot()
 
-# Dowload Files
-ravi = ['Ravi', 25, 'Design Engineer', 'Milacron']
-ragul = ['Ragul',26, 'FEA Engineer', 'Mold Masters']
-rocky = ['Rocky', 29, 'Senior engineer', 'LMW']
-friends = [ravi, ragul, rocky]
+    unitprice = df['UnitPrice'].groupby(df['month']).sum()
+    ax.bar(unitprice.index, unitprice.values)
 
-df = pd.DataFrame(friends)
-df.columns = ['Name', 'Age', 'Job Title', 'Company']
+    ax.set_xlabel('Month')
+    ax.set_ylabel('Price')
+    ax.set_title('Monthly Price')
+    plt.xticks(rotation = 90)
+    st.write(fig)
 
-st.download_button(
-    label ='Download Data', 
-    data = df.to_csv(),
-    file_name ='friends.csv'
-)
+with cols2[1]:
+    st.write('Top Countries')
+    
+    grouped_df_countriees = df.groupby('Country')['UnitPrice'].sum().reset_index()
+    top_5_countriees =  grouped_df_countriees.nlargest(6,'UnitPrice')
+    total_other_countriees = grouped_df_countriees['UnitPrice'].sum()-top_5_countriees['UnitPrice'].sum()
+    other_df_countriees =  pd.DataFrame({'Country':['Others'], 'UnitPrice':[total_other_countriees]})
+
+    df_countries = pd.concat([top_5_countriees, other_df_countriees ]).reset_index(drop =True)
+    df_countries.drop(0,axis=0,inplace = True )
+
+    fig = plt.figure(dpi=120)
+    ax = fig.add_subplot()
+
+    ax.pie(df_countries['UnitPrice'], autopct='%1.0f%%', 
+           labels = df_countries['Country'])
+
+    ax.set_title('top countries')
+    st.write(fig)
+
+
+    
+
+
+
+
+
